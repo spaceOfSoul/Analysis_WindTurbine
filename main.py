@@ -52,12 +52,12 @@ if __name__ == "__main__":
         loss_history.append(epoch_loss)
         print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {epoch_loss:.4f}")
         
-        torch.save(model.state_dict(), os.join(save_dir,f"model_epoch_{epoch+1}"))
+        torch.save(model.state_dict(), os.path.join(save_dir,f"model_epoch_{epoch+1}"))
         
         if epoch == 0 or epoch_loss < min(loss_history[:-1]):
-            torch.save(model.state_dict(), os.join(save_dir,"best_model"))
+            torch.save(model.state_dict(), os.path.join(save_dir,"best_model"))
 
-    np.save(os.join(save_dir,'loss_history.npy'), np.array(loss_history))
+    np.save(os.path.join(save_dir,'loss_history.npy'), np.array(loss_history))
     
     plt.plot(loss_history)
     plt.xlabel('Epoch')
