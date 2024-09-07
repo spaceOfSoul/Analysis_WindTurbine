@@ -48,6 +48,9 @@ if __name__ == "__main__":
         # train
         for data in train_loader:
             inputs, targets = data
+            inputs = torch.tensor(inputs).cuda() 
+            targets = torch.tensor(targets).cuda() 
+            
             optimizer.zero_grad()
     
             outputs = model(inputs)
@@ -65,7 +68,9 @@ if __name__ == "__main__":
         with torch.no_grad():
             for data in val_loader:
                 inputs, targets = data
-
+                inputs = torch.tensor(inputs).cuda() 
+                targets = torch.tensor(targets).cuda() 
+                
                 outputs = model(inputs)
                 loss = criterion(outputs, targets.unsqueeze(1))
 
