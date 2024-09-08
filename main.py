@@ -11,14 +11,28 @@ from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 
 from SCADA_data import T1Dataset
-from Model.RNNs import LSTMModule
+from Model.RNNs import LSTMModule, RNNModule, GRUModule
 from utility import weights_init
 
+# configs
 batch_size = 32
 learning_rate = 0.001
 num_epochs = 100
 
-def train(train_loader, val_loader, model, save_dir):
+hidden_dim = 128
+dropout = 0.2
+num_layers = 2
+
+model_types = [
+                "RNN",
+                "LSTM",
+                "GRU",
+                "Bidirectional-RNN",
+                "Bidirectional-LSTM",
+                "Bidirectional-GRU",
+               ]
+
+def train(train_loader, val_loader, model, save_dir, show_fig = False):
     criterion = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     
@@ -82,11 +96,13 @@ def train(train_loader, val_loader, model, save_dir):
     plt.ylabel('Loss')
     plt.title('Training Loss')
     plt.savefig(os.path.join(save_dir,'training_loss.png'))
-    plt.close()
+    
+    if show_fig:
+        plt.show()
     
     return os.path.join(save_dir,"best_model")
 
-def test(test_loader, model_path, save_dir):
+def test(test_loader, model_path, save_dir, show_fig = False):
     model.load_state_dict(torch.load(model_path))
     model.eval()
     
@@ -120,13 +136,15 @@ def test(test_loader, model_path, save_dir):
     
     plt.figure(figsize=(10,6))
     plt.plot(all_targets, label="Actual", color="blue")
-    plt.plot(all_preds, label="Predicted", color="red", linestyle="--")
+    plt.plot(all_preds, label="Predicted", color="red")
     plt.xlabel('Samples')
     plt.ylabel('Values')
     plt.title('Predicted result')
     plt.legend()
     plt.savefig(os.path.join(save_dir, 'test_results.png'))
-    plt.show()
+    
+    if show_fig:
+        plt.show()
 
 if __name__ == "__main__":
     # argument parsing
@@ -136,12 +154,15 @@ if __name__ == "__main__":
     
     common_group = parser.add_argument_group("Flags for commons")
     common_group.add_argument("--save_dir", type=str, default="")
+    common_group.add_argument("--model_type", type=str, choices=[], required="True")
     
     test_group = parser.add_argument_group("Flags for test only")
     test_group.add_argument("--load_path", type=str, default="")
     
     # 배치사이즈, 에퐄, 레이어 등은 전역 변수에 둠.
     # 추후 yaml로
+    
+    # 모델 종류도 바꿔야 하는데, 아직은 parse arg로 받음.
     
     flags = parser.parse_args()
     
@@ -163,7 +184,26 @@ if __name__ == "__main__":
     input_dim = train_dataset.data.shape[1]
     output_dim = 1
     
-    model = LSTMModule(input_dim, output_dim)
+    if flags.model_type == "RNN":
+        model = RNNModule(input_dim, hidden_dim, rec_dropout=dropout, num_layers=num_layers, bidirectional=False)
+
+    elif flags.model_type == "LSTM":
+        model = LSTMModule(input_dim, hidden_dim, rec_dropout=dropout, num_layers=num_layers, bidirectional=False)
+
+    elif flags.model_type == "GRU":
+        model = GRUModule(input_dim, hidden_dim, rec_dropout=dropout, num_layers=num_layers, bidirectional=False)
+
+    elif flags.model_type == "Bidirectional-RNN":
+        model = RNNModule(input_dim, hidden_dim, rec_dropout=dropout, num_layers=num_layers, bidirectional=True)
+
+    elif flags.model_type == "Bidirectional-LSTM":
+        model = LSTMModule(input_dim, hidden_dim, rec_dropout=dropout, num_layers=num_layers, bidirectional=True)
+
+    elif flags.model_type == "Bidirectional-GRU":
+        model = GRUModule(input_dim, hidden_dim, rec_dropout=dropout, num_layers=num_layers, bidirectional=True)
+
+    else:
+        raise ValueError(f"Unknown model type: {flags.model_type}")
     model.cuda()
     model.apply(weights_init)
     
