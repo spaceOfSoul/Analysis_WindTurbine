@@ -126,7 +126,7 @@ def test(test_loader, model_path, save_dir):
     plt.title('Predicted result')
     plt.legend()
     plt.savefig(os.path.join(save_dir, 'test_results.png'))
-    plt.close()
+    plt.show()
 
 if __name__ == "__main__":
     # argument parsing
@@ -174,6 +174,8 @@ if __name__ == "__main__":
         model_path = train(train_loader, val_loader, model, save_dir)
     
     # Test Mode
+    
+    # train아니면 path가 None임.
     if model_path == None:
         model_path = flags.load_path
         
